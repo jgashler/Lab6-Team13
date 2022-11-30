@@ -9,14 +9,12 @@ else:
 	raise Exception('Unsupported Version of PyQt: {}'.format(PYQT_VER))
 
 
-
-
 import time
 import numpy as np
 from TSPClasses import *
 import heapq
 import itertools
-
+import random
 
 
 class TSPSolver:
@@ -25,7 +23,6 @@ class TSPSolver:
 
 	def setupWithScenario( self, scenario ):
 		self._scenario = scenario
-
 
 	''' <summary>
 		This is the entry point for the default solver
@@ -37,7 +34,7 @@ class TSPSolver:
 		solution found, and three null values for fields not used for this 
 		algorithm</returns> 
 	'''
-	
+
 	def defaultRandomTour( self, time_allowance=60.0 ):
 		results = {}
 		cities = self._scenario.getCities()
@@ -68,7 +65,6 @@ class TSPSolver:
 		results['pruned'] = None
 		return results
 
-
 	''' <summary>
 		This is the entry point for the greedy solver, which you must implement for 
 		the group project (but it is probably a good idea to just do it for the branch-and
@@ -81,11 +77,9 @@ class TSPSolver:
 		algorithm</returns> 
 	'''
 
-	def greedy( self,time_allowance=60.0 ):
+	def greedy(self, time_allowance=60.0):
 		pass
-	
-	
-	
+
 	''' <summary>
 		This is the entry point for the branch-and-bound algorithm that you will implement
 		</summary>
@@ -94,11 +88,9 @@ class TSPSolver:
 		not include the initial BSSF), the best solution found, and three more ints: 
 		max queue size, total number of states created, and number of pruned states.</returns> 
 	'''
-		
-	def branchAndBound( self, time_allowance=60.0 ):
+
+	def branchAndBound(self, time_allowance=60.0):
 		pass
-
-
 
 	''' <summary>
 		This is the entry point for the algorithm you'll write for your group project.
@@ -108,10 +100,39 @@ class TSPSolver:
 		best solution found.  You may use the other three field however you like.
 		algorithm</returns> 
 	'''
-		
-	def fancy( self,time_allowance=60.0 ):
-		pass
-		
+
+	def fancy(self, time_allowance=60.0):
+		cities = self._scenario.getCities()
+		ncities = len(cities)
+		count = 0
+
+		# TODO: actually implement greedy tour and use its solution here
+		soln = self.defaultRandomTour(time_allowance)['soln']
+
+		start = time.time()
+
+		# TODO: for some reason, adding this iteration loop makes it so the final solution does not draw lines. works otherwise
+		for iteration in range(2000):
+			# TODO: improve randomization. this helps, but is not perfect
+			for city in range(random.randint(0, ncities), ncities):
+				for neighbor in range(ncities):
+					route_to_check = soln.route
+
+					# swap two paths
+					temp = route_to_check[city]
+					route_to_check[city] = route_to_check[neighbor]
+					route_to_check[neighbor] = temp
+
+					route_to_check = TSPSolution(route_to_check)
+
+					# if better than current solution, replace
+					if route_to_check.cost < soln.cost:
+						soln = route_to_check
+						count += 1
+
+		finish = time.time()
+
+		return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None, 'pruned': None}
 
 
 
