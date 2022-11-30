@@ -1,0 +1,33 @@
+LOCAL SEARCH
+
+
+def 2-swap:
+    soln = generate greedy solution as initial BSSF
+
+    for city in cities:
+        for neighbor in cities - city:
+            swap the paths, as in:
+                city->c_child and neighbor->n_child need to become city->n_child and neighbor->c_child
+            potential_soln = generate a new route from the swapped version
+            compare the cost of soln and potential_soln, and set soln to the lower one
+    return soln
+
+def 3-swap:
+    same as 2-swap, but swap the paths of 3 cities at a time and select the minimum of the 7 options created
+    runs slower, but probably arrives at better solutions (?)
+
+
+
+
+## TO CONSIDER ##
+    2-swap looks like it runs in O(n^2) time, 3-swap in O(n^3)
+    space doesn't look like it will be a significant issue like it was with branch and bound
+
+    should this be iterative, as in, is checking each city once enough or should you repeat this loop?
+    this would only increase the complexity by a linear factor, so it's probably not the end of the world, especially if there is a significant decrease in cost
+
+    in order to avoid explore various local minima and increase our chances of finding the global minimum:
+        a) during 2-swap algorithm, throw in some random 3-swap checks to shake things up a bit
+        b) generate multiple greedy solutions to start from by changing which city the greedy algorithm begins its search from
+        c) solve the local search multiple times by starting at different cities or mixing up the order at which the cities are checked
+        d) any combination of the above
