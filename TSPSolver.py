@@ -18,6 +18,9 @@ import random
 
 
 def swap_elements(el1, el2):
+    temp = el1
+    el1 = el2
+    el2 = temp
     return el2, el1
 
 
@@ -64,7 +67,7 @@ class TSPSolver:
     def branchAndBound(self, time_allowance=60.0):
         pass
 
-    def fancy(self, time_allowance=60.0):
+    def fancy2(self, time_allowance=60.0):
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
