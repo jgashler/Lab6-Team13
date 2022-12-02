@@ -102,6 +102,19 @@ class TSPSolver:
     def branchAndBound(self, time_allowance=60.0):
         pass
 
+    def n_swap(self, current_soln, n):
+        new_soln = np.array(current_soln.route)
+        size = len(new_soln)
+        indices_to_swap = random.sample(range(0, size), n)
+        cities_to_swap = new_soln[indices_to_swap]
+        new_order = indices_to_swap.copy()
+        random.shuffle(new_order)
+        for i, city in enumerate(cities_to_swap):
+            new_soln[new_order[i]] = city
+        new_soln = TSPSolution(list(new_soln))
+        is_better = (new_soln.cost < current_soln.cost)
+        return new_soln, is_better
+
     def fancy2(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
@@ -174,10 +187,6 @@ class TSPSolver:
                                 soln = route
                                 improved = True
                                 count += 1
-            if improved is False:
-                soln, improved = n_swap(soln, n_to_swap)
-            else:
-                soln, trash = n_swap(soln, n_to_swap)
 
         finish = time.time()
 
