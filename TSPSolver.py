@@ -62,7 +62,46 @@ class TSPSolver:
         return results
 
     def greedy(self, time_allowance=60.0):
-        pass
+        count = 0
+        cities = self._scenario.getCities()
+        ncities = len(cities)
+        done = False
+        soln = None
+
+        start = time.time()
+
+        while time_allowance > time.time() - start and not done:
+            count += 1
+            visited = [False] * ncities
+            start_point = np.random.randint(0, ncities)
+            route = [cities[start_point]]
+            visited[start_point] = True
+            next_point = None
+            visit = False
+
+            for i in range(ncities - 1):
+                next_point = None
+                next_dist = np.inf
+                for j in range(ncities):
+                    if j != i and not visited[j]:
+                        if route[i].costTo(cities[j]) < next_dist:
+                            next_dist = route[i].costTo(cities[j])
+                            next_point = cities[j]
+                            visit = j
+                if next_point is None:
+                    break
+                else:
+                    route.append(next_point)
+                    visited[visit] = True
+
+            soln = TSPSolution(route)
+            if soln.cost < np.inf and next_point is not None:
+                done = True
+
+        finish = time.time()
+
+        return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
+                'pruned': None}
 
     def branchAndBound(self, time_allowance=60.0):
         pass
@@ -72,8 +111,7 @@ class TSPSolver:
         ncities = len(cities)
         count = 0
 
-        # TODO: actually implement greedy tour and use its solution here
-        soln = self.defaultRandomTour(time_allowance)['soln']
+        soln = self.greedy(time_allowance)['soln']
 
         start = time.time()
 
@@ -114,7 +152,7 @@ class TSPSolver:
         ncities = len(cities)
         count = 0
 
-        soln = self.defaultRandomTour(time_allowance)['soln']
+        soln = self.greedy(time_allowance)['soln']
 
         start = time.time()
 
