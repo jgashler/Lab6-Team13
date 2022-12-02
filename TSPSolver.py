@@ -9,11 +9,7 @@ elif PYQT_VER == 'PYQT4':
 else:
     raise Exception('Unsupported Version of PyQt: {}'.format(PYQT_VER))
 
-import time
-import numpy as np
 from TSPClasses import *
-import heapq
-import itertools
 import random
 
 
@@ -106,7 +102,65 @@ class TSPSolver:
     def branchAndBound(self, time_allowance=60.0):
         pass
 
-    def fancy2(self, time_allowance=60.0):
+    def fancy2(self, time_allowance=60):
+        cities = self._scenario.getCities()
+        ncities = len(cities)
+        count = 0
+        soln = self.greedy(time_allowance)['soln']
+        improved = True
+        iters = 0
+
+        start = time.time()
+
+        while improved:
+            iters += 1
+            improved = False
+            for i in range(ncities-1):
+                for j in range(i+1, ncities):
+                    route = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
+                    if route.cost < soln.cost:
+                        soln = route
+                        improved = True
+                        count += 1
+
+        finish = time.time()
+
+        return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
+                'pruned': None}
+
+    def fancy3(self, time_allowance=60):
+        cities = self._scenario.getCities()
+        ncities = len(cities)
+        count = 0
+
+        soln = self.greedy(time_allowance)['soln']
+
+        start = time.time()
+
+        improved = True
+        iters = 0
+
+        while improved:
+            iters += 1
+            improved = False
+            for i in range(ncities-2):
+                for j in range(i+1, ncities-1):
+                    for k in range(j+1, ncities):
+                        routes = [TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:]),
+                                  TSPSolution(soln.route[:i] + list(reversed(soln.route[i:k + 1])) + soln.route[k + 1:]),
+                                  TSPSolution(soln.route[:j] + list(reversed(soln.route[j:k + 1])) + soln.route[k + 1:])]
+                        for route in routes:
+                            if route.cost < soln.cost:
+                                soln = route
+                                improved = True
+                                count += 1
+
+        finish = time.time()
+
+        return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
+                'pruned': None}
+
+    def old_fancy2(self, time_allowance=60.0):
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
@@ -118,7 +172,6 @@ class TSPSolver:
         iter_since_update = 0
         done = False
 
-        # TODO: for some reason, adding this while loop makes it so the final solution does not draw lines. works otherwise
         while time_allowance > time.time() - start and not done:
             start_city = random.randint(0, ncities)
             for city in range(start_city - ncities, start_city - 1):
@@ -137,7 +190,7 @@ class TSPSolver:
                         iter_since_update = 0
                     else:
                         iter_since_update += 1
-                        # TODO: tune this number to give best results in least amount of time
+
                         if iter_since_update > 300000:
                             done = True
                             break
@@ -147,7 +200,7 @@ class TSPSolver:
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
                 'pruned': None}
 
-    def fancy3(self, time_allowance=60):
+    def old_fancy3(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
