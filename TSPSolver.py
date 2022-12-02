@@ -77,24 +77,32 @@ class TSPSolver:
 
         start = time.time()
 
-        # TODO: for some reason, adding this iteration loop makes it so the final solution does not draw lines. works otherwise
-        for iteration in range(2000):
-            # TODO: improve randomization. this helps, but is not perfect
-            for city in range(random.randint(0, ncities), ncities):
+        iter_since_update = 0
+        done = False
+
+        # TODO: for some reason, adding this while loop makes it so the final solution does not draw lines. works otherwise
+        while time_allowance > time.time() - start and not done:
+            start_city = random.randint(0, ncities)
+            for city in range(start_city - ncities, start_city - 1):
                 for neighbor in range(ncities):
                     route_to_check = soln.route
 
-                    # swap two paths
-                    temp = route_to_check[city]
-                    route_to_check[city] = route_to_check[neighbor]
-                    route_to_check[neighbor] = temp
-
+                    # swap two paths and convert to class TSPSolution
+                    route_to_check[city], route_to_check[neighbor] = swap_elements(route_to_check[neighbor], route_to_check[city])
                     route_to_check = TSPSolution(route_to_check)
 
-                    # if better than current solution, replace
+                    # if better than current soln, replace
                     if route_to_check.cost < soln.cost:
                         soln = route_to_check
                         count += 1
+                        print(soln.cost, iter_since_update) # for debug
+                        iter_since_update = 0
+                    else:
+                        iter_since_update += 1
+                        # TODO: tune this number to give best results in least amount of time
+                        if iter_since_update > 300000:
+                            done = True
+                            break
 
         finish = time.time()
 
