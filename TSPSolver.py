@@ -106,22 +106,39 @@ class TSPSolver:
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
-        soln = self.greedy(time_allowance)['soln']
+        numSolutions = 5
+        n_to_swap = 5
+        starting_points = []
+        solutions = []
+        for i in range(0, numSolutions):
+            starting_points.append(self.greedy(time_allowance)['soln'])
         improved = True
         iters = 0
 
         start = time.time()
 
-        while time_allowance > time.time() - start and improved:
-            iters += 1
-            improved = False
-            for i in range(ncities-1):
-                for j in range(i+1, ncities):
-                    route = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
-                    if route.cost < soln.cost:
-                        soln = route
-                        improved = True
-                        count += 1
+        for soln in starting_points:
+            while time_allowance > time.time() - start and improved:
+                iters += 1
+                improved = False
+                for i in range(ncities-1):
+                    for j in range(i+1, ncities):
+                        route = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
+                        if route.cost < soln.cost:
+                            soln = route
+                            improved = True
+                            count += 1
+                if improved is False:
+                    soln, improved = self.n_swap(soln, n_to_swap)
+                else:
+                    soln, trash = self.n_swap(soln, n_to_swap)
+
+            solutions.append(soln)
+
+        soln = solutions[0]
+        for s in solutions:
+            if s.cost < soln.cost:
+                soln = s
 
         finish = time.time()
 
@@ -131,9 +148,10 @@ class TSPSolver:
     def fancy3(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
+        n_to_swap = 5
         count = 0
 
-        soln = self.greedy(time_allowance)['soln']
+        soln = self.fancy2(time_allowance)['soln']
 
         start = time.time()
 
@@ -156,6 +174,10 @@ class TSPSolver:
                                 soln = route
                                 improved = True
                                 count += 1
+            if improved is False:
+                soln, improved = n_swap(soln, n_to_swap)
+            else:
+                soln, trash = n_swap(soln, n_to_swap)
 
         finish = time.time()
 
