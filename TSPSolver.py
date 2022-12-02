@@ -112,7 +112,7 @@ class TSPSolver:
 
         start = time.time()
 
-        while improved:
+        while time_allowance > time.time() - start and improved:
             iters += 1
             improved = False
             for i in range(ncities-1):
@@ -140,7 +140,7 @@ class TSPSolver:
         improved = True
         iters = 0
 
-        while improved:
+        while time_allowance > time.time() - start and improved:
             iters += 1
             improved = False
             for i in range(ncities-2):
@@ -149,6 +149,8 @@ class TSPSolver:
                         routes = [TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:]),
                                   TSPSolution(soln.route[:i] + list(reversed(soln.route[i:k + 1])) + soln.route[k + 1:]),
                                   TSPSolution(soln.route[:j] + list(reversed(soln.route[j:k + 1])) + soln.route[k + 1:])]
+                        for route in range(3):
+                            routes.append(TSPSolution(list(reversed(routes[route].route))))
                         for route in routes:
                             if route.cost < soln.cost:
                                 soln = route
