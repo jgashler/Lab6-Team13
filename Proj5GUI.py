@@ -371,7 +371,7 @@ class Proj5GUI( QMainWindow ):
 		('Greedy','greedy'), \
 		('Branch and Bound','branchAndBound'), \
 		('2-swap','fancy2'), \
-		('3-swap','fancy3'), \
+		('Local Search Tournament','fancy3'), \
 	]															# whitespace hack to get longest to display correctly
 
 	def initUI( self ):
@@ -501,7 +501,7 @@ class Proj5GUI( QMainWindow ):
 		for alg in self.ALGORITHMS:
 			self.algDropDown.addItem( alg[0] )
 		self.algDropDown.activated.connect(self.algChanged)
-		self.algDropDown.setCurrentIndex(3)
+		self.algDropDown.setCurrentIndex(4)
 		self.algChanged(2) # to handle start state
 
 		self.graphReady = False
