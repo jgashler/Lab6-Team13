@@ -99,9 +99,6 @@ class TSPSolver:
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
                 'pruned': None}
 
-    def branchAndBound(self, time_allowance=60.0):
-        pass
-
     def n_swap(self, current_soln, n):
         new_soln = np.array(current_soln.route)
         size = len(new_soln)
@@ -161,10 +158,10 @@ class TSPSolver:
     def fancy3(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
-        n_to_swap = 5
-        count = 0
 
-        soln = self.fancy2(time_allowance)['soln']
+        fancy2 = self.fancy2(time_allowance)
+        soln = fancy2['soln']
+        count = fancy2['count']
 
         start = time.time()
 
