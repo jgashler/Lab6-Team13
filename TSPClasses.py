@@ -73,7 +73,7 @@ class Scenario:
 		else:
 			self._cities = [City( pt.x(), pt.y() ) for pt in city_locations]
 
-
+		self.index_of_city = {city:i for i, city in enumerate(self._cities)}
 		num = 0
 		for city in self._cities:
 			#if difficulty == "Hard":

@@ -11,6 +11,8 @@ else:
 
 from TSPClasses import *
 import random
+import heapq
+from state import State
 
 
 def swap_elements(el1, el2):
@@ -55,6 +57,45 @@ class TSPSolver:
         results['max'] = None
         results['total'] = None
         results['pruned'] = None
+        return results
+    
+    def branchAndBound(self, time_allowance=60.0):
+        results = {}
+        n_sols = 0
+        pruned = 0
+        max_q_size = 0
+        State.nstates = 0
+        start = time.perf_counter()
+        cities = self._scenario._cities
+        BSSF = State()
+        q = []
+
+        heapq.heappush(q, State(cities[0]))
+        while len(q) > 0 and time.perf_counter()-start < time_allowance:
+            current = heapq.heappop(q)
+            if current.get_lowerbound() < BSSF.get_lowerbound():
+                if current.is_solution():
+                    BSSF = current
+                    n_sols+=1
+                for child in current.expand():
+                    if child.get_lowerbound() < BSSF.get_lowerbound():
+                        heapq.heappush(q, child)
+                    else:
+                        pruned+=1
+                if len(q) > max_q_size:
+                    max_q_size = len(q)
+            else:
+                pruned+=1
+        stop = time.perf_counter()
+
+        solution = TSPSolution(BSSF.path)
+        results['cost'] = solution.cost
+        results['time'] = stop - start
+        results['count'] = n_sols
+        results['soln'] = solution
+        results['max'] = max_q_size
+        results['total'] = State.nstates
+        results['pruned'] = pruned
         return results
 
     def greedy(self, time_allowance=60.0):
@@ -109,10 +150,13 @@ class TSPSolver:
         for i, city in enumerate(cities_to_swap):
             new_soln[new_order[i]] = city
         new_soln = TSPSolution(list(new_soln))
-        is_better = (new_soln.cost < current_soln.cost)
-        return new_soln, is_better
+        return new_soln
 
-    def fancy2(self, time_allowance=60):
+
+
+
+    def two_swap_local_search(self, time_allowance=60):
+        print("Solve from scratch")
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
@@ -122,46 +166,50 @@ class TSPSolver:
         solutions = []
         for i in range(0, numSolutions):
             starting_points.append(self.greedy(time_allowance)['soln'])
-        improved = True
-        iters = 0
-
         start = time.time()
 
         for soln in starting_points:
-            while time_allowance > time.time() - start and improved:
-                iters += 1
+            print(f"Here's a NEW starting point!")
+            while time_allowance > time.time() - start:
+                improved_soln = soln
                 improved = False
                 for i in range(ncities-1):
                     for j in range(i+1, ncities):
-                        route = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
-                        if route.cost < soln.cost:
-                            soln = route
+                        tweaked_soln = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
+                        if tweaked_soln.cost < improved_soln.cost:
+                            print(f"Improved for cost {tweaked_soln.cost}")
+                            improved_soln = tweaked_soln
                             improved = True
                             count += 1
-                if improved is False:
-                    soln, improved = self.n_swap(soln, n_to_swap)
-                else:
-                    soln, trash = self.n_swap(soln, n_to_swap)
-
+                for i in range(ncities**2//2):
+                    tweaked_soln = self.n_swap(soln, n_to_swap)
+                    if tweaked_soln.cost < improved_soln.cost:
+                        print(f"Found a {n_to_swap} swap improvement! {tweaked_soln.cost}")
+                        improved_soln = tweaked_soln
+                        improved = True
+                        count += 1
+                if not improved:
+                    break
+                soln = improved_soln
             solutions.append(soln)
 
         soln = solutions[0]
         for s in solutions:
             if s.cost < soln.cost:
                 soln = s
-
         finish = time.time()
-
+        print()
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
                 'pruned': None}
 
-    def fancy3(self, time_allowance=60):
+    def three_swap_local_search(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
 
-        fancy2 = self.fancy2(time_allowance)
+        fancy2 = self.two_swap_local_search(time_allowance)
         soln = fancy2['soln']
         count = fancy2['count']
+        print(f"Starting three swap at cost {soln.cost}")
 
         start = time.time()
 
@@ -183,6 +231,7 @@ class TSPSolver:
                             if route.cost < soln.cost:
                                 soln = route
                                 improved = True
+                                print(f"Improved for cost {soln.cost}")
                                 count += 1
 
         finish = time.time()
