@@ -10,6 +10,7 @@ else:
     raise Exception('Unsupported Version of PyQt: {}'.format(PYQT_VER))
 
 from TSPClasses import *
+from Proj5GUI import Proj5GUI
 import random
 import heapq
 from state import State
@@ -98,15 +99,13 @@ class TSPSolver:
         results['pruned'] = pruned
         return results
 
-    def greedy(self, time_allowance=60.0):
+    def greedy_random(self, time_allowance=60.0):
         count = 0
         cities = self._scenario.getCities()
         ncities = len(cities)
         done = False
         soln = None
-
         start = time.time()
-
         while time_allowance > time.time() - start and not done:
             count += 1
             visited = [False] * ncities
@@ -115,7 +114,6 @@ class TSPSolver:
             visited[start_point] = True
             next_point = None
             visit = False
-
             for i in range(ncities - 1):
                 next_point = None
                 next_dist = np.inf
@@ -130,14 +128,47 @@ class TSPSolver:
                 else:
                     route.append(next_point)
                     visited[visit] = True
-
             soln = TSPSolution(route)
             if soln.cost < np.inf and next_point is not None:
                 done = True
-
         finish = time.time()
-
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
+                'pruned': None}
+
+    def greedy(self, time_allowance=60.0):
+        count = 0
+        cities = self._scenario.getCities()
+        ncities = len(cities)
+        done = False
+        soln = None
+        final_soln = None
+        start = time.time()
+        for start_point in range(len(cities)):
+            count += 1
+            visited = [False] * ncities
+            route = [cities[start_point]]
+            visited[start_point] = True
+            next_point = None
+            visit = 0
+            for i in range(ncities - 1):
+                next_point = None
+                next_dist = np.inf
+                for j in range(ncities):
+                    if j != i and not visited[j]:
+                        if route[i].costTo(cities[j]) < next_dist:
+                            next_dist = route[i].costTo(cities[j])
+                            next_point = cities[j]
+                            visit = j
+                if next_point is None:
+                    break
+                else:
+                    route.append(next_point)
+                    visited[visit] = True
+            soln = TSPSolution(route)
+            if (final_soln == None or soln.cost < final_soln.cost) and next_point is not None:
+                final_soln = soln
+        finish = time.time()
+        return {'cost': final_soln.cost, 'time': finish - start, 'count': count, 'soln': final_soln, 'max': None, 'total': None,
                 'pruned': None}
 
     def n_swap(self, current_soln, n):
@@ -156,7 +187,6 @@ class TSPSolver:
 
 
     def two_swap_local_search(self, time_allowance=60):
-        print("Solve from scratch")
         cities = self._scenario.getCities()
         ncities = len(cities)
         count = 0
@@ -165,26 +195,23 @@ class TSPSolver:
         starting_points = []
         solutions = []
         for i in range(0, numSolutions):
-            starting_points.append(self.greedy(time_allowance)['soln'])
+            starting_points.append(self.greedy_random(time_allowance)['soln'])
         start = time.time()
 
         for soln in starting_points:
-            print(f"Here's a NEW starting point!")
-            while time_allowance > time.time() - start:
+            while (time_allowance/numSolutions) > time.time() - start:
                 improved_soln = soln
                 improved = False
                 for i in range(ncities-1):
                     for j in range(i+1, ncities):
                         tweaked_soln = TSPSolution(soln.route[:i] + list(reversed(soln.route[i:j + 1])) + soln.route[j + 1:])
                         if tweaked_soln.cost < improved_soln.cost:
-                            print(f"Improved for cost {tweaked_soln.cost}")
                             improved_soln = tweaked_soln
                             improved = True
                             count += 1
                 for i in range(ncities**2//2):
                     tweaked_soln = self.n_swap(soln, n_to_swap)
                     if tweaked_soln.cost < improved_soln.cost:
-                        print(f"Found a {n_to_swap} swap improvement! {tweaked_soln.cost}")
                         improved_soln = tweaked_soln
                         improved = True
                         count += 1
@@ -198,25 +225,22 @@ class TSPSolver:
             if s.cost < soln.cost:
                 soln = s
         finish = time.time()
-        print()
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
                 'pruned': None}
 
-    def three_swap_local_search(self, time_allowance=60):
+    def local_search_tournament(self, time_allowance=60):
         cities = self._scenario.getCities()
         ncities = len(cities)
 
-        fancy2 = self.two_swap_local_search(time_allowance)
+        fancy2 = self.two_swap_local_search(time_allowance/2)
         soln = fancy2['soln']
         count = fancy2['count']
-        print(f"Starting three swap at cost {soln.cost}")
 
         start = time.time()
-
         improved = True
         iters = 0
 
-        while time_allowance > time.time() - start and improved:
+        while int(time_allowance/2) > time.time() - start and improved:
             iters += 1
             improved = False
             for i in range(ncities-2):
@@ -231,7 +255,6 @@ class TSPSolver:
                             if route.cost < soln.cost:
                                 soln = route
                                 improved = True
-                                print(f"Improved for cost {soln.cost}")
                                 count += 1
 
         finish = time.time()
@@ -244,7 +267,7 @@ class TSPSolver:
         ncities = len(cities)
         count = 0
 
-        soln = self.greedy(time_allowance)['soln']
+        soln = self.greedy_random(time_allowance)['soln']
 
         start = time.time()
 
@@ -284,7 +307,7 @@ class TSPSolver:
         ncities = len(cities)
         count = 0
 
-        soln = self.greedy(time_allowance)['soln']
+        soln = self.greedy_random(time_allowance)['soln']
 
         start = time.time()
 
@@ -312,3 +335,9 @@ class TSPSolver:
 
         return {'cost': soln.cost, 'time': finish - start, 'count': count, 'soln': soln, 'max': None, 'total': None,
                 'pruned': None}
+
+
+
+
+
+    

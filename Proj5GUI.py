@@ -371,7 +371,7 @@ class Proj5GUI( QMainWindow ):
 		('Greedy','greedy'), \
 		('Branch and Bound','branchAndBound'), \
 		('2-swap','two_swap_local_search'), \
-		('Local Search Tournament','three_swap_local_search'), \
+		('Local Search Tournament','local_search_tournament'), \
 	]															# whitespace hack to get longest to display correctly
 
 	def initUI( self ):
@@ -490,7 +490,7 @@ class Proj5GUI( QMainWindow ):
 		self.generateButton.clicked.connect(self.generateClicked)
 		self.solveButton.clicked.connect(self.solveClicked)
 
-		self.diffDropDown.addItem('Easy                               ')					# Weird hack to make box wide enough to show all of last item
+		self.diffDropDown.addItem('Easy                               ') # Weird hack to make box wide enough to show all of last item
 		self.diffDropDown.addItem('Normal')
 		self.diffDropDown.addItem('Hard')
 		self.diffDropDown.addItem('Hard (Deterministic)')
@@ -519,8 +519,41 @@ class Proj5GUI( QMainWindow ):
 
 if __name__ == '__main__':
 	# This line allows CNTL-C in the terminal to kill the program
+	"""
 	signal.signal(signal.SIGINT, signal.SIG_DFL)
 	
 	app = QApplication(sys.argv)
 	w = Proj5GUI()
 	sys.exit(app.exec())
+
+	"""
+	with open("Results.txt", 'w') as file:
+		app = QApplication(sys.argv)
+		n_cities = [15, 30, 60, 100, 200]
+		time_limit_seconds = 600
+		gui = Proj5GUI()
+		s = gui.solver	
+
+		algorithms_to_test = [s.defaultRandomTour, s.greedy, s.branchAndBound, s.two_swap_local_search, s.local_search_tournament]
+		names = ["Random", "Greedy", "BandB", "2Swap", "LSTA"]
+		name_of = {alg:name for (alg, name) in zip(algorithms_to_test, names)}
+		seeds = [422893, 590238, 923093, 209235, 842398]
+
+		for n in n_cities:
+			file.write(f"{n} cities\n")
+			file.write("=====================\n")
+			gui.diffDropDown.setCurrentIndex(2)
+			gui.size.setText(f"{n}")
+			for alg in algorithms_to_test:
+				elapsed_time = 0
+				cost = 0
+				for seed in seeds:
+					gui.curSeed.setText(f"{seed}")
+					gui.generateNetwork()
+					s.setupWithScenario(gui._scenario)
+					results = alg(time_limit_seconds)
+					elapsed_time += float(results['time'])/5
+					cost += float(results['cost'])/5
+				file.write(f"{name_of[alg]}:\tTime: {elapsed_time}\tCost: {cost}\n")
+			file.write("\n")
+	
