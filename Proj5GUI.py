@@ -529,7 +529,7 @@ if __name__ == '__main__':
 	"""
 	app = QApplication(sys.argv)
 	n_cities = [100, 200]#[15, 30, 60, 100, 200]
-	time_limit_seconds = 1
+	time_limit_seconds = 600
 	gui = Proj5GUI()
 	s = gui.solver	
 
