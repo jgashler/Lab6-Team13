@@ -88,12 +88,15 @@ class TSPSolver:
             else:
                 pruned+=1
         stop = time.perf_counter()
-
-        solution = TSPSolution(BSSF.path)
-        results['cost'] = solution.cost
+        if BSSF.get_lowerbound() != np.inf:
+            solution = TSPSolution(BSSF.path)
+            results['cost'] = solution.cost
+            results['soln'] = solution
+        else:
+            results['cost'] = np.inf
+            results['soln'] = None
         results['time'] = stop - start
         results['count'] = n_sols
-        results['soln'] = solution
         results['max'] = max_q_size
         results['total'] = State.nstates
         results['pruned'] = pruned
